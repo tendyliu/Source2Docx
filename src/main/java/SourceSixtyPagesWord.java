@@ -29,8 +29,10 @@ public class SourceSixtyPagesWord {
             return;
         }
 
-        ssw.scanAndGenerateSourceDoc(args[0], args[1], args[2], args[3]);
+        Long totalSourceLines = ssw.scanAndGenerateSourceDoc(args[0], args[1], args[2], args[3]);
         Console.print("Docxs are generated.");
+        Console.print(StrUtil.CRLF);
+        Console.print("Total source line num is " + totalSourceLines);
         Console.print(StrUtil.CRLF);
     }
 
@@ -40,14 +42,16 @@ public class SourceSixtyPagesWord {
      * @param fileType  扫描的文件类型后缀，可以是 ".java", ".js"等，目前仅支持一种类型
      * @param beginDoc  要保存的开头源码的Word文档
      * @param endDoc    要保存的结束源码的Word文档
+     * @return 扫描目录中所有的源代码行数
      * @throws Exception
      */
-    public void scanAndGenerateSourceDoc(String sourceDir, String fileType, String beginDoc, String endDoc) throws Exception {
+    public Long scanAndGenerateSourceDoc(String sourceDir, String fileType, String beginDoc, String endDoc) throws Exception {
         List<String> beginSource2000 = new ArrayList<>();
         List<String> endSource2000 = new ArrayList<>();
-        scanSource(sourceDir, fileType, beginSource2000, endSource2000);
+        Long totalSourceLines = scanSource(sourceDir, fileType, beginSource2000, endSource2000);
         genereteWordDoc(beginDoc, beginSource2000);
         genereteWordDoc(endDoc, endSource2000);
+        return totalSourceLines;
     }
 
     public void genereteWordDoc(String fileName, List<String> sourceLines)throws Exception {
@@ -80,7 +84,10 @@ public class SourceSixtyPagesWord {
     //扫描指定目录及其子目录， 找到指定文件类型的文件清单列表，首先从第一个文件开始读取行信息，忽略掉空行以及注释行，读取2000行代码信息
     //随后从最后一个文件开始读取行信息， 忽略掉空行以及注释行， 读取2000行代码信息
     //如果所有文件的代码行数达不到数量，则报错抛出。
-    public void scanSource(String sourceDir, String fileType, List<String> beginSource2000, List<String> endSource2000){
+    public Long scanSource(String sourceDir, String fileType, List<String> beginSource2000, List<String> endSource2000){
+
+        Long totalSourceLines = 0L;
+
         FileFilter fileFilter = new FileFilter() {
             @Override
             public boolean accept(File pathname) {
@@ -103,14 +110,11 @@ public class SourceSixtyPagesWord {
             for(String line : lines){
                 String trimLine = StrUtil.trimToEmpty(line);
                 if(isSourceLine(trimLine)){
-                    beginSource2000.add(line);
-                    if(beginSource2000.size()>=2000){
-                        break;
+                    totalSourceLines++;
+                    if(beginSource2000.size()<=2000){
+                        beginSource2000.add(line);
                     }
                 }
-            }
-            if(beginSource2000.size()>=2000){
-                break;
             }
         }
 
@@ -132,6 +136,8 @@ public class SourceSixtyPagesWord {
                 break;
             }
         }
+
+        return totalSourceLines;
     }
 
     public boolean isSourceLine (String lineText){
