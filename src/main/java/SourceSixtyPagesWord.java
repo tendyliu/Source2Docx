@@ -8,6 +8,7 @@ import org.docx4j.wml.ObjectFactory;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,13 +107,19 @@ public class SourceSixtyPagesWord {
         //开始读取头2000行代码信息
         for(int i=0; i<fileList.size();i++){
             File file = fileList.get(i);
-            List<String> lines = FileUtil.readLines(file, "UTF-8");
+
+            String content = new String(FileUtil.readBytes(file), StandardCharsets.UTF_8);
+            String noComments = content.replaceAll("(?s)//.*?(\r?\n)|/\\*.*?\\*/", ""); //去掉注释
+            String[] lines = noComments.split("\n");
+
             for(String line : lines){
                 String trimLine = StrUtil.trimToEmpty(line);
-                if(isSourceLine(trimLine)){
+                String normalizedSpaces = trimLine.replaceAll("\\s{3,}", " "); //合并多个空格
+
+                if(isSourceLine(normalizedSpaces)){
                     totalSourceLines++;
                     if(beginSource2000.size()<=2000){
-                        beginSource2000.add(line);
+                        beginSource2000.add(normalizedSpaces);
                     }
                 }
             }
@@ -122,11 +129,16 @@ public class SourceSixtyPagesWord {
         //开始读取结束的2000行代码信息
         for(int i=fileList.size()-1; i>=0;i--){
             File file = fileList.get(i);
-            List<String> lines = FileUtil.readLines(file, "UTF-8");
+
+            String content = new String(FileUtil.readBytes(file), StandardCharsets.UTF_8);
+            String noComments = content.replaceAll("(?s)//.*?(\r?\n)|/\\*.*?\\*/", ""); //去掉注释
+            String[] lines = noComments.split("\n");
+
             for(String line : lines){
                 String trimLine = StrUtil.trimToEmpty(line);
-                if(isSourceLine(trimLine)){
-                    endSource2000.add(line);
+                String normalizedSpaces = trimLine.replaceAll("\\s{3,}", " "); //合并多个空格
+                if(isSourceLine(normalizedSpaces)){
+                    endSource2000.add(normalizedSpaces);
                     if(endSource2000.size()>=2000){
                         break;
                     }
