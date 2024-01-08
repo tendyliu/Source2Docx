@@ -23,7 +23,9 @@ jar {
     manifest {
         attributes "Main-Class": "SourceSixtyPagesWord"
     }
-
+    
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
